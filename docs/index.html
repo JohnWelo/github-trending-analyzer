@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub 今日热门项目榜 · 2026-11-01</title>
+<style>
+  :root {
+    --bg: #f6f8fa;
+    --card: #ffffff;
+    --border: #e1e4e8;
+    --text: #24292f;
+    --muted: #57606a;
+    --accent: #0969da;
+    --green: #1a7f37;
+    --orange: #d4a72c;
+    --red: #cf222e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px 20px;
+    line-height: 1.6;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header h1 { font-size: 24px; font-weight: 700; }
+  header .meta { color: var(--muted); font-size: 14px; }
+  .legend { display: flex; gap: 16px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+  .legend span b { font-weight: 600; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: box-shadow .15s ease;
+  }
+  .card:hover { box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .card-head h2 { font-size: 17px; font-weight: 700; }
+  .card-head h2 a { color: var(--accent); text-decoration: none; }
+  .card-head h2 a:hover { text-decoration: underline; }
+  .lang {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: #ddf4ff;
+    padding: 2px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .desc { font-size: 14px; color: var(--muted); }
+  .stars { font-size: 13px; color: var(--muted); }
+  .stars b { color: var(--text); }
+  .score-row { display: flex; align-items: center; gap: 12px; }
+  .score-num { font-size: 28px; font-weight: 800; min-width: 56px; }
+  .grade {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 6px;
+    color: #fff;
+  }
+  .grade.gS { background: var(--green); }
+  .grade.gA { background: var(--accent); }
+  .grade.gB { background: var(--orange); }
+  .grade.gC { background: var(--red); }
+  .bar-track { flex: 1; height: 8px; background: #eaeef2; border-radius: 999px; overflow: hidden; }
+  .bar-fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #2da44e, #1a7f37); }
+  .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; font-size: 12px; color: var(--muted); }
+  .dim { display: flex; align-items: center; gap: 8px; }
+  .dim .bar-track { height: 6px; }
+  .dim .bar-fill { background: var(--accent); }
+  .dim em { font-style: normal; font-weight: 600; min-width: 26px; text-align: right; color: var(--text); }
+  .highlights { font-size: 13px; }
+  .highlights strong, .usage strong { display: block; margin-bottom: 4px; font-size: 13px; color: var(--text); }
+  .highlights ul { padding-left: 18px; color: var(--text); }
+  .usage { font-size: 13px; color: var(--text); background: #f6f8fa; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .usage code { background: #eaeef2; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+  .comment { font-size: 13px; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 10px; }
+  .comment b { color: var(--green); }
+  footer { margin-top: 28px; text-align: center; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <h1>GitHub 今日热门项目榜 · 2026-11-01</h1>
+      <div class="meta">2026-11-01 · 今日（Today） · 共 14 个项目 · 数据来源 GitHub Trending</div>
+    </div>
+    <div class="legend">
+      <span>评级：<b>S</b> 强烈推荐 · <b>A</b> 推荐 · <b>B</b> 值得关注 · <b>C</b> 一般</span>
+    </div>
+  </header>
+
+  
+
+  <div class="grid">
+    <article class="card" data-score="92">
+      <div class="card-head">
+        <h2><a href="https://github.com/thedotmack/claude-mem" target="_blank">thedotmack/claude-mem</a></h2>
+        <span class="lang">TypeScript</span>
+      </div>
+      <p class="desc">AI 会话持久上下文——捕获 agent 会话行为，经 AI 压缩后注入未来会话，支持 Claude Code、Codex、Gemini、Copilot 等主流 agent。</p>
+      <div class="stars"><b>⭐ 108,298</b> · 1,723 stars today</div>
+      <div class="score-row">
+        <span class="score-num">92</span>
+        <div class="bar-track"><span class="bar-fill" style="width:92%"></span></div>
+        <span class="grade gS">S</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:25%"></span></div><em>25</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:22%"></span></div><em>22</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:27%"></span></div><em>27</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>支持 7+ 主流 agent 工具，生态覆盖广</li>
+          <li>AI 自动压缩注入上下文，成本可控</li>
+          <li>SQLite 本地存储 + RAG 检索</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>按官方文档（claude-mem.ai）安装插件，支持 npm / CLI 接入。</div>
+      <div class="comment"><b>点评</b>：价值点：直击 AI 会话失忆痛点，通用性极强；风险点：上下文数据需自行管理隐私。</div>
+    </article>
+    <article class="card" data-score="91">
+      <div class="card-head">
+        <h2><a href="https://github.com/pbakaus/impeccable" target="_blank">pbakaus/impeccable</a></h2>
+        <span class="lang">Rust</span>
+      </div>
+      <p class="desc">让 AI 编码助手更懂设计的「设计语言」——用 polish / bolder 等指令词汇引导，审查时自动抓出 AI 味。</p>
+      <div class="stars"><b>⭐ 98,680</b> · 1,303 stars today</div>
+      <div class="score-row">
+        <span class="score-num">91</span>
+        <div class="bar-track"><span class="bar-fill" style="width:91%"></span></div>
+        <span class="grade gS">S</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:25%"></span></div><em>25</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:23%"></span></div><em>23</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:25%"></span></div><em>25</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>设计词汇体系，可直接指挥 agent 输出</li>
+          <li>内置 critique / audit 审查模式</li>
+          <li>Rust 实现，性能强</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>通过 CLI / API 接入你的编码 agent，详见 impeccable.style。</div>
+      <div class="comment"><b>点评</b>：价值点：解决 AI 输出「塑料感」设计的痛点；风险点：面向开发者，普通用户上手门槛较高。</div>
+    </article>
+    <article class="card" data-score="91">
+      <div class="card-head">
+        <h2><a href="https://github.com/obra/superpowers" target="_blank">obra/superpowers</a></h2>
+        <span class="lang">Shell</span>
+      </div>
+      <p class="desc">agentic skills 框架与软件开发方法论——把 AI 编程沉淀为可复用的技能体系。</p>
+      <div class="stars"><b>⭐ 310,270</b> · 1,338 stars today</div>
+      <div class="score-row">
+        <span class="score-num">91</span>
+        <div class="bar-track"><span class="bar-fill" style="width:91%"></span></div>
+        <span class="grade gS">S</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:25%"></span></div><em>25</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:21%"></span></div><em>21</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:27%"></span></div><em>27</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>31 万 star 现象级项目</li>
+          <li>可复用的 agent skills 体系</li>
+          <li>成熟的 subagent 驱动开发方法论</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>克隆仓库，按 README 将 skills 配置到你的 agent 环境。</div>
+      <div class="comment"><b>点评</b>：价值点：把一次性 AI 编程升级为可持续方法；风险点：初始配置复杂度较高。</div>
+    </article>
+    <article class="card" data-score="85">
+      <div class="card-head">
+        <h2><a href="https://github.com/THU-MAIC/OpenMAIC" target="_blank">THU-MAIC/OpenMAIC</a></h2>
+        <span class="lang">TypeScript</span>
+      </div>
+      <p class="desc">多 Agent 交互课堂——清华团队开源，把任意主题变成可交互课堂（课件、测验、模拟、项目式学习）。</p>
+      <div class="stars"><b>⭐ 42,319</b> · 1,044 stars today</div>
+      <div class="score-row">
+        <span class="score-num">85</span>
+        <div class="bar-track"><span class="bar-fill" style="width:85%"></span></div>
+        <span class="grade gA">A</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:20%"></span></div><em>20</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:21%"></span></div><em>21</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:26%"></span></div><em>26</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>一键生成完整课件</li>
+          <li>AI 老师/同学实时互动、白板、语音</li>
+          <li>支持导出 pptx / html，接入飞书、Slack 等</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>自托管（Node.js + pnpm + PostgreSQL），或使用 hosted 模式 open.maic.chat。</div>
+      <div class="comment"><b>点评</b>：价值点：教育场景落地强，有论文与中文文档；风险点：自托管依赖较多。</div>
+    </article>
+    <article class="card" data-score="84">
+      <div class="card-head">
+        <h2><a href="https://github.com/Renhuai123/ziwei-doushu" target="_blank">Renhuai123/ziwei-doushu</a></h2>
+        <span class="lang">TypeScript</span>
+      </div>
+      <p class="desc">紫微斗数开源排盘引擎——基于倪海厦《天纪》体系，含完整排盘算法、四化系统、格局知识库、古籍原文数据。</p>
+      <div class="stars"><b>⭐ 12,643</b> · 1,148 stars today</div>
+      <div class="score-row">
+        <span class="score-num">84</span>
+        <div class="bar-track"><span class="bar-fill" style="width:84%"></span></div>
+        <span class="grade gA">A</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:23%"></span></div><em>23</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:22%"></span></div><em>22</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:22%"></span></div><em>22</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:17%"></span></div><em>17</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>完整排盘算法 + 四化系统</li>
+          <li>内置格局知识库与古籍原文数据</li>
+          <li>中文开发者社区活跃</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>仓库提供 API / 页面，官方站 metisziwei.com 可在线体验。</div>
+      <div class="comment"><b>点评</b>：价值点：传统文化数字化，中文开发者友好；风险点：受众特定，内容严谨性需自行判断。</div>
+    </article>
+    <article class="card" data-score="82">
+      <div class="card-head">
+        <h2><a href="https://github.com/HKUDS/DeepTutor" target="_blank">HKUDS/DeepTutor</a></h2>
+        <span class="lang">Python</span>
+      </div>
+      <p class="desc">终身个性化 AI 导师（港大数据智能实验室）——交互式学习、深度研究一体化 CLI 工具。</p>
+      <div class="stars"><b>⭐ 53,204</b> · 929 stars today</div>
+      <div class="score-row">
+        <span class="score-num">82</span>
+        <div class="bar-track"><span class="bar-fill" style="width:82%"></span></div>
+        <span class="grade gA">A</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:17%"></span></div><em>17</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:21%"></span></div><em>21</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:26%"></span></div><em>26</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>多 Agent 系统驱动的个性化教学</li>
+          <li>CLI 工具开箱即用</li>
+          <li>有 arXiv 论文与学术背书</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>pip 安装 CLI 即可使用，详见仓库 README。</div>
+      <div class="comment"><b>点评</b>：价值点：AI 教育方向有学术支撑；风险点：产品仍处早期，实际效果因人而异。</div>
+    </article>
+    <article class="card" data-score="81">
+      <div class="card-head">
+        <h2><a href="https://github.com/Orkas-AI/Orkas" target="_blank">Orkas-AI/Orkas</a></h2>
+        <span class="lang">JavaScript</span>
+      </div>
+      <p class="desc">开源 MIT 本地优先 AI 团队桌面应用——Commander 把目标拆成待办，协调 16 个内置专家 agent 与 Claude Code 等协作。</p>
+      <div class="stars"><b>⭐ 7,021</b> · 1,034 stars today</div>
+      <div class="score-row">
+        <span class="score-num">81</span>
+        <div class="bar-track"><span class="bar-fill" style="width:81%"></span></div>
+        <span class="grade gA">A</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:17%"></span></div><em>17</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:20%"></span></div><em>20</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:27%"></span></div><em>27</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:17%"></span></div><em>17</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>本地优先，数据默认不出电脑</li>
+          <li>16 内置 agent + 兼容主流 CLI agent</li>
+          <li>免费下载送 500 积分，支持定时自动化</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>官网下载 macOS / Windows 安装包，或源码运行（Node 22+）。</div>
+      <div class="comment"><b>点评</b>：价值点：普通用户也能用上多 agent 工作流；风险点：云同步等高级功能需付费版。</div>
+    </article>
+    <article class="card" data-score="80">
+      <div class="card-head">
+        <h2><a href="https://github.com/mattpocock/skills" target="_blank">mattpocock/skills</a></h2>
+        <span class="lang">Shell</span>
+      </div>
+      <p class="desc">面向真实工程师的 skills 集合——直接来自 TypeScript 大神 Matt Pocock 的 .agents 目录。</p>
+      <div class="stars"><b>⭐ 308,752</b> · 883 stars today</div>
+      <div class="score-row">
+        <span class="score-num">80</span>
+        <div class="bar-track"><span class="bar-fill" style="width:80%"></span></div>
+        <span class="grade gA">A</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:17%"></span></div><em>17</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:22%"></span></div><em>22</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:25%"></span></div><em>25</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:16%"></span></div><em>16</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>30.7 万 star 的现象级参考</li>
+          <li>可直接借鉴的工程 skills 范式</li>
+          <li>TypeScript 领域权威出品</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>从 .agents 目录复制 skills 到自己的 agent 环境。</div>
+      <div class="comment"><b>点评</b>：价值点：学习 agent skills 的最佳样板；风险点：需要一定 agent 环境配置能力。</div>
+    </article>
+    <article class="card" data-score="78">
+      <div class="card-head">
+        <h2><a href="https://github.com/milind-soni/OpenMausBot" target="_blank">milind-soni/OpenMausBot</a></h2>
+        <span class="lang">TypeScript</span>
+      </div>
+      <p class="desc">开源 Grok Bot 替代品——自带虚拟机，AI 机器人可在其中执行任务，支持自托管。</p>
+      <div class="stars"><b>⭐ 9,994</b> · 1,092 stars today</div>
+      <div class="score-row">
+        <span class="score-num">78</span>
+        <div class="bar-track"><span class="bar-fill" style="width:78%"></span></div>
+        <span class="grade gA">A</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:22%"></span></div><em>22</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:22%"></span></div><em>22</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:16%"></span></div><em>16</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>自托管、无厂商锁定</li>
+          <li>内置虚拟机供 bot 执行任务</li>
+          <li>Electron + Docker 跨平台</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>按 README 自托管部署（Docker 方案），官网 openmausbot.com。</div>
+      <div class="comment"><b>点评</b>：价值点：把 AI 机器人能力完全开源化；风险点：open issue 较多（613），成熟度一般。</div>
+    </article>
+    <article class="card" data-score="76">
+      <div class="card-head">
+        <h2><a href="https://github.com/pingdotgg/t3code" target="_blank">pingdotgg/t3code</a></h2>
+        <span class="lang">TypeScript</span>
+      </div>
+      <p class="desc">T3 生态编码工具（pingdotgg 出品）——fork 比例极高，社区参与度强。</p>
+      <div class="stars"><b>⭐ 36,232</b> · 今日增量未获取到</div>
+      <div class="score-row">
+        <span class="score-num">76</span>
+        <div class="bar-track"><span class="bar-fill" style="width:76%"></span></div>
+        <span class="grade gA">A</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:24%"></span></div><em>24</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:16%"></span></div><em>16</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>fork 8.8k，社区参与度高</li>
+          <li>TypeScript 工具链</li>
+          <li>T3 生态权威背书</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>详见仓库 README 安装使用。</div>
+      <div class="comment"><b>点评</b>：价值点：T3 技术栈用户的高质量工具；风险点：本次抓取未拿到今日增量字段，建议复查。</div>
+    </article>
+    <article class="card" data-score="75">
+      <div class="card-head">
+        <h2><a href="https://github.com/lightpanda-io/browser" target="_blank">lightpanda-io/browser</a></h2>
+        <span class="lang">Zig</span>
+      </div>
+      <p class="desc">为 AI 和自动化设计的无头浏览器——Zig 编写，主打轻量与低资源占用。</p>
+      <div class="stars"><b>⭐ 39,494</b> · 665 stars today</div>
+      <div class="score-row">
+        <span class="score-num">75</span>
+        <div class="bar-track"><span class="bar-fill" style="width:75%"></span></div>
+        <span class="grade gA">A</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:16%"></span></div><em>16</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:25%"></span></div><em>25</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:16%"></span></div><em>16</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>专为 AI / agent 场景优化</li>
+          <li>极低资源占用</li>
+          <li>Zig 高性能实现</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>安装二进制后按文档接入 agent 框架。</div>
+      <div class="comment"><b>点评</b>：价值点：agent 时代的浏览器基础设施；风险点：生态仍在早期。</div>
+    </article>
+    <article class="card" data-score="72">
+      <div class="card-head">
+        <h2><a href="https://github.com/Donchitos/Claude-Code-Game-Studios" target="_blank">Donchitos/Claude-Code-Game-Studios</a></h2>
+        <span class="lang">Shell</span>
+      </div>
+      <p class="desc">把 Claude Code 变成完整游戏开发工作室——49 个 AI agent、72 个 workflow skills，模拟真实工作室层级。</p>
+      <div class="stars"><b>⭐ 31,499</b> · 742 stars today</div>
+      <div class="score-row">
+        <span class="score-num">72</span>
+        <div class="bar-track"><span class="bar-fill" style="width:72%"></span></div>
+        <span class="grade gB">B</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:16%"></span></div><em>16</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:22%"></span></div><em>22</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:16%"></span></div><em>16</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>业界最大规模 agent 编排之一</li>
+          <li>模拟真实游戏工作室层级</li>
+          <li>Shell 脚本即插即用</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>克隆到本地，按 README 配置 Claude Code 环境。</div>
+      <div class="comment"><b>点评</b>：价值点：游戏开发自动化的极致探索；风险点：面向特定人群，上手门槛高。</div>
+    </article>
+    <article class="card" data-score="69">
+      <div class="card-head">
+        <h2><a href="https://github.com/bregman-arie/devops-exercises" target="_blank">bregman-arie/devops-exercises</a></h2>
+        <span class="lang">Python</span>
+      </div>
+      <p class="desc">DevOps 面试题与练习合集——覆盖 Linux、AWS、K8s、Docker、Ansible、CI/CD 等 20+ 方向。</p>
+      <div class="stars"><b>⭐ 86,199</b> · 116 stars today</div>
+      <div class="score-row">
+        <span class="score-num">69</span>
+        <div class="bar-track"><span class="bar-fill" style="width:69%"></span></div>
+        <span class="grade gB">B</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:11%"></span></div><em>11</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:25%"></span></div><em>25</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:15%"></span></div><em>15</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>8.6 万 star 的经典题库</li>
+          <li>覆盖 20+ 技术方向</li>
+          <li>面试 / 学习两用</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>直接在线阅读或 clone 本地练习。</div>
+      <div class="comment"><b>点评</b>：价值点：DevOps 求职学习必备；风险点：内容体量大，需自行筛选重点。</div>
+    </article>
+    <article class="card" data-score="67">
+      <div class="card-head">
+        <h2><a href="https://github.com/vorssaint/vorssaint-utils" target="_blank">vorssaint/vorssaint-utils</a></h2>
+        <span class="lang">Swift</span>
+      </div>
+      <p class="desc">免费开源的 macOS 菜单栏工具集——Swift 原生实现，面向 Mac 日常效率。</p>
+      <div class="stars"><b>⭐ 32,134</b> · 342 stars today</div>
+      <div class="score-row">
+        <span class="score-num">67</span>
+        <div class="bar-track"><span class="bar-fill" style="width:67%"></span></div>
+        <span class="grade gB">B</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:11%"></span></div><em>11</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:18%"></span></div><em>18</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:22%"></span></div><em>22</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:16%"></span></div><em>16</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          <li>Swift 原生实现</li>
+          <li>菜单栏效率工具集合</li>
+          <li>macOS 用户友好</li>
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>下载安装包直接使用。</div>
+      <div class="comment"><b>点评</b>：价值点：提升 Mac 日常操作效率；风险点：具体功能覆盖面需按需查看。</div>
+    </article>
+  </div>
+
+  <footer>由豆包 Agent 自动生成 · github-trending-analyzer Skill</footer>
+</div>
+
+<script>
+  // 按总分（data-score）降序排列卡片，防止个别卡片顺序错误
+  (function () {
+    var grid = document.querySelector('.grid');
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('.card'));
+    cards.sort(function (a, b) { return (parseFloat(b.dataset.score) || 0) - (parseFloat(a.dataset.score) || 0); });
+    cards.forEach(function (c) { grid.appendChild(c); });
+  })();
+</script>
+</body>
+</html>

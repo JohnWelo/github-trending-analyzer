@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Agent 产物预览缓存
+.preview/
+
+# 临时与备份
+*.tmp
+*.bak
