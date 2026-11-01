@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{REPORT_TITLE}}</title>
+<style>
+  :root {
+    --bg: #f6f8fa;
+    --card: #ffffff;
+    --border: #e1e4e8;
+    --text: #24292f;
+    --muted: #57606a;
+    --accent: #0969da;
+    --green: #1a7f37;
+    --orange: #d4a72c;
+    --red: #cf222e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px 20px;
+    line-height: 1.6;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header h1 { font-size: 24px; font-weight: 700; }
+  header .meta { color: var(--muted); font-size: 14px; }
+  .legend { display: flex; gap: 16px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+  .legend span b { font-weight: 600; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: box-shadow .15s ease;
+  }
+  .card:hover { box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .card-head h2 { font-size: 17px; font-weight: 700; }
+  .card-head h2 a { color: var(--accent); text-decoration: none; }
+  .card-head h2 a:hover { text-decoration: underline; }
+  .lang {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: #ddf4ff;
+    padding: 2px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .desc { font-size: 14px; color: var(--muted); }
+  .stars { font-size: 13px; color: var(--muted); }
+  .stars b { color: var(--text); }
+  .score-row { display: flex; align-items: center; gap: 12px; }
+  .score-num { font-size: 28px; font-weight: 800; min-width: 56px; }
+  .grade {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 6px;
+    color: #fff;
+  }
+  .grade.gS { background: var(--green); }
+  .grade.gA { background: var(--accent); }
+  .grade.gB { background: var(--orange); }
+  .grade.gC { background: var(--red); }
+  .bar-track { flex: 1; height: 8px; background: #eaeef2; border-radius: 999px; overflow: hidden; }
+  .bar-fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #2da44e, #1a7f37); }
+  .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; font-size: 12px; color: var(--muted); }
+  .dim { display: flex; align-items: center; gap: 8px; }
+  .dim .bar-track { height: 6px; }
+  .dim .bar-fill { background: var(--accent); }
+  .dim em { font-style: normal; font-weight: 600; min-width: 26px; text-align: right; color: var(--text); }
+  .highlights { font-size: 13px; }
+  .highlights strong, .usage strong { display: block; margin-bottom: 4px; font-size: 13px; color: var(--text); }
+  .highlights ul { padding-left: 18px; color: var(--text); }
+  .usage { font-size: 13px; color: var(--text); background: #f6f8fa; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .usage code { background: #eaeef2; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+  .comment { font-size: 13px; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 10px; }
+  .comment b { color: var(--green); }
+  footer { margin-top: 28px; text-align: center; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <h1>{{REPORT_TITLE}}</h1>
+      <div class="meta">{{REPORT_DATE}} · {{REPORT_PERIOD}} · 共 {{TOTAL_COUNT}} 个项目 · 数据来源 GitHub Trending</div>
+    </div>
+    <div class="legend">
+      <span>评级：<b>S</b> 强烈推荐 · <b>A</b> 推荐 · <b>B</b> 值得关注 · <b>C</b> 一般</span>
+    </div>
+  </header>
+
+  <!--
+    ============================================================
+    卡片填充说明（agent 使用，生成后请删除本注释）：
+    为每个项目复制一份下方的卡片 HTML 结构，按总分从高到低排列输出，
+    并替换以下字段：
+      href          → https://github.com/owner/repo
+      {{NAME}}      → owner/repo
+      {{LANG}}      → 主要语言
+      {{DESC}}      → 一句话描述
+      {{STARS}}     → 总 Star 数
+      {{DELTA}}     → 周期新增 Star（如 1,234 stars today）
+      {{TOTAL}}     → 总分 0-100
+      {{GRADE_CLASS}} → gS / gA / gB / gC（对应 S/A/B/C 评级）
+      {{GRADE}}     → S / A / B / C
+      {{P}} / {{M}} / {{U}} / {{Q}} → 四维度得分（欢迎度/维护/实用/质量）
+      {{HIGHLIGHTS}} → 亮点列表 <li> 项
+      {{USAGE}}     → 使用方式一句话（可用 <code> 包命令）
+      {{COMMENT}}   → 点评：价值点 / 风险点
+    维度名 label 按需替换，数量保持 4 项。
+    ============================================================
+  -->
+
+  <div class="grid">
+    <article class="card" data-score="{{TOTAL}}">
+      <div class="card-head">
+        <h2><a href="https://github.com/owner/repo" target="_blank">{{NAME}}</a></h2>
+        <span class="lang">{{LANG}}</span>
+      </div>
+      <p class="desc">{{DESC}}</p>
+      <div class="stars"><b>⭐ {{STARS}}</b> · {{DELTA}}</div>
+      <div class="score-row">
+        <span class="score-num">{{TOTAL}}</span>
+        <div class="bar-track"><span class="bar-fill" style="width:{{TOTAL}}%"></span></div>
+        <span class="grade {{GRADE_CLASS}}">{{GRADE}}</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:{{P}}%"></span></div><em>{{P}}</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:{{M}}%"></span></div><em>{{M}}</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:{{U}}%"></span></div><em>{{U}}</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:{{Q}}%"></span></div><em>{{Q}}</em></div>
+      </div>
+      <div class="highlights">
+        <strong>亮点</strong>
+        <ul>
+          {{HIGHLIGHTS}}
+        </ul>
+      </div>
+      <div class="usage"><strong>使用方式</strong>{{USAGE}}</div>
+      <div class="comment"><b>点评</b>：{{COMMENT}}</div>
+    </article>
+  </div>
+
+  <footer>由豆包 Agent 自动生成 · github-trending-analyzer Skill</footer>
+</div>
+
+<script>
+  // 按总分（data-score）降序排列卡片，防止个别卡片顺序错误
+  (function () {
+    var grid = document.querySelector('.grid');
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('.card'));
+    cards.sort(function (a, b) { return (parseFloat(b.dataset.score) || 0) - (parseFloat(a.dataset.score) || 0); });
+    cards.forEach(function (c) { grid.appendChild(c); });
+  })();
+</script>
+</body>
+</html>
