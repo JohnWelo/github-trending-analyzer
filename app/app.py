@@ -107,6 +107,38 @@ def export_csv():
                     headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
 
+@app.get("/api/official/refresh")
+def official_refresh():
+    """手动刷新官方趋势页：绕过熔断，不重跑评分，失败时回落到缓存快照。"""
+    period = request.args.get("period", "daily")
+    if period not in core.PERIOD_DAYS:
+        period = "daily"
+    try:
+        res = core.refresh_official(
+            period=period,
+            language=request.args.get("language", "").strip(),
+            limit=max(3, min(50, int(request.args.get("limit", 25)))),
+            token=request.headers.get("X-GitHub-Token", ""),
+        )
+    except Exception as e:
+        return jsonify({"ok": False, "message": f"刷新失败：{type(e).__name__} — {e}",
+                        "items": [], "stale": False}), 502
+    prior = (LAST["result"] or {}).get("items", [])
+    token = request.headers.get("X-GitHub-Token", "")
+    core.meta_coverage(reset=True)
+    res["items"] = core.attach_scores(res["items"], prior, period, token)
+    res["meta_coverage"] = core.meta_coverage_from_items(res["items"])
+    if LAST["result"] is not None:
+        LAST["result"]["official_items"] = res["items"]
+        LAST["result"]["official_fetched_at"] = res["fetched_at"]
+        LAST["result"]["official_stale"] = res["stale"]
+        LAST["result"]["official_url"] = res["url"]
+        LAST["result"]["official_period"] = res["period"]
+        LAST["result"]["official_language"] = res["language"]
+        LAST["result"]["meta_coverage"] = res["meta_coverage"]
+    return jsonify(res)
+
+
 @app.get("/api/health")
 def health():
     return jsonify({"ok": True})

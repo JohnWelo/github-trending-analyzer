@@ -15,6 +15,7 @@ GitHub 热门项目分析 — 数据抓取与规则打分核心模块
 from __future__ import annotations
 
 import datetime as dt
+import json
 import os
 import re
 import threading
@@ -54,7 +55,8 @@ INSTALL_HINTS = [
 # 列表顺序即同分时的优先级。
 CATEGORY_RULES = [
     ("视频与音频", ["video", "audio", "ffmpeg", "subtitle", "streaming", "media player", "podcast",
-                "music", "transcod", "speech", "tts", "asr", "dubbing", "voice", "视频", "音频", "剪辑", "字幕", "配音"]),
+                "music", "transcod", "speech", "tts", "asr", "dubbing", "voice", "animation",
+                "视频", "音频", "剪辑", "字幕", "配音", "动画", "短片"]),
     ("网络爬虫与采集", ["crawler", "scraper", "scraping", "spider", "downloader", "download manager",
                   "爬虫", "采集", "下载器", "抓取"]),
     ("AI 与大模型", ["llm", "gpt", "agent", "langchain", "rag", "diffusion", "transformer", "inference",
@@ -80,13 +82,13 @@ CATEGORY_RULES = [
     ("系统与运维", ["kernel", "driver", "linux", "macos", "file manager", "monitor", "log analyzer",
               "embedded", "firmware", "systemd", "运维", "监控", "系统工具"]),
     ("游戏与图形", ["game", "unity", "godot", "engine", "shader", "opengl", "vulkan", "pixel art",
-              "游戏", "引擎"]),
+              "emulator", "simulator", "游戏", "引擎", "模拟器", "仿真器"]),
     ("移动与跨端", ["android", "ios", "flutter", "react native", "swiftui", "kotlin", "mobile app",
               "移动端", "跨平台", "安卓"]),
     ("区块链与 Web3", ["blockchain", "crypto", "wallet", "ethereum", "solana", "web3", "nft", "defi",
                   "区块链", "钱包"]),
     ("学习资源", ["awesome", "tutorial", "course", "roadmap", "interview", "cheatsheet", "learning",
-              "handbook", "教程", "学习", "面试"]),
+              "handbook", "guide", "教程", "学习", "面试", "手册", "指南"]),
 ]
 
 
@@ -186,30 +188,99 @@ class Repo:
         return self.full_name.split("/")[0]
 
 
-def fetch_official_trending(session, period: str, language: str, limit: int) -> Optional[list]:
+OFFICIAL_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache", "official")
+
+
+def _official_cache_path(period: str, language: str) -> str:
+    key = f"{period}_{(language or 'all').lower().replace(' ', '-')}"
+    return os.path.join(OFFICIAL_CACHE_DIR, key + ".json")
+
+
+def _save_official_cache(period: str, language: str, url: str, items: list) -> str:
+    stamp = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
+    try:
+        os.makedirs(OFFICIAL_CACHE_DIR, exist_ok=True)
+        with open(_official_cache_path(period, language), "w", encoding="utf-8") as f:
+            json.dump({"fetched_at": stamp, "url": url, "items": items}, f, ensure_ascii=False)
+    except Exception:
+        pass
+    return stamp
+
+
+def load_official_cache(period: str, language: str) -> dict:
+    """读取该周期/语言的官方快照；没有则退回任意最近一份。"""
+    import glob
+    p = _official_cache_path(period, language)
+    try:
+        if os.path.exists(p):
+            return json.load(open(p, "r", encoding="utf-8"))
+    except Exception:
+        pass
+    files = glob.glob(os.path.join(OFFICIAL_CACHE_DIR, "*.json"))
+    if files:
+        try:
+            latest = max(files, key=os.path.getmtime)
+            return json.load(open(latest, "r", encoding="utf-8"))
+        except Exception:
+            pass
+    return {}
+
+
+_official_block_until = 0.0       # 官方页连续失败后，5 分钟内直接用缓存，不重复等代理超时
+
+
+def _get_official_html(url: str, session, force: bool = False) -> str:
+    """代理对 github.com 是间歇性放行：requests 一次 + curl 一次；失败后 5 分钟内不再试。
+    force=True 用于「手动刷新」，跳过熔断窗口。"""
+    global _official_block_until
+    if not force and time.time() < _official_block_until:
+        return ""
+    try:
+        r = session.get(url, timeout=5)
+        if r.status_code == 200 and "Box-row" in r.text:
+            _official_block_until = 0.0
+            return r.text
+    except Exception:
+        pass
+    try:
+        import subprocess
+        cp = subprocess.run(
+            ["curl", "-sS", "-m", "8", "-A", UA, url],
+            capture_output=True, text=True, timeout=10,
+        )
+        if cp.returncode == 0 and "Box-row" in cp.stdout:
+            _official_block_until = 0.0
+            return cp.stdout
+    except Exception:
+        pass
+    _official_block_until = time.time() + 300
+    return ""
+
+
+def fetch_official_trending(session, period: str, language: str, limit: int,
+                            force: bool = False) -> Optional[list]:
     """抓官方 trending 页；不可达返回 None（由调用方降级）。"""
     since = {"daily": "", "weekly": "?since=weekly", "monthly": "?since=monthly"}[period]
     path = f"/{language.lower()}" if language else ""
     url = f"https://github.com/trending{path}{since}"
-    try:
-        r = session.get(url, timeout=12)
-        if r.status_code != 200 or "Box-row" not in r.text:
-            return None
-    except Exception:
+    html = _get_official_html(url, session, force)
+    if not html:
         return None
 
-    rows = re.findall(r'<article class="Box-row".*?</article>', r.text, re.S)
+    rows = re.findall(r'<article class="Box-row".*?</article>', html, re.S)
     repos = []
     for row in rows[: limit * 2]:
-        m = re.search(r'<h2[^>]*>\s*<a href="/([^"]+)"', row)
+        # GitHub 在数字前插了 <svg>，先整段剥掉再取文本，否则取到的是空串
+        clean = re.sub(r"<svg.*?</svg>", "", row, flags=re.S)
+        m = re.search(r'<h2[^>]*>\s*<a[^>]*href="/([^"/]+/[^"]+)"', row, re.S)
         if not m:
             continue
         full = m.group(1).strip()
         desc_m = re.search(r'<p class="col-9[^"]*">\s*(.*?)\s*</p>', row, re.S)
-        lang_m = re.search(r'itemprop="programmingLanguage">([^<]+)<', row)
-        star_m = re.search(r'href="/[^"]+/stargazers"[^>]*>\s*([\d,]+)', row)
-        fork_m = re.search(r'href="/[^"]+/forks"[^>]*>\s*([\d,]+)', row)
-        delta_m = re.search(r'([\d,]+)\s+stars?\s+(?:today|this week|this month)', row)
+        lang_m = re.search(r'itemprop="programmingLanguage">([^<]+)<', clean)
+        star_m = re.search(r'href="/[^"]+/stargazers"[^>]*>\s*([\d,]+)', clean)
+        fork_m = re.search(r'href="/[^"]+/forks"[^>]*>\s*([\d,]+)', clean)
+        delta_m = re.search(r'([\d,]+)\s+stars?\s+(?:today|this week|this month)', clean)
         repos.append(Repo(
             full_name=full,
             url=f"https://github.com/{full}",
@@ -220,7 +291,53 @@ def fetch_official_trending(session, period: str, language: str, limit: int) -> 
             stars_period=_int(delta_m.group(1)) if delta_m else 0,
             data_source="official",
         ))
+    if repos:
+        _save_official_cache(period, language, url, [{
+            "full_name": r.full_name, "url": r.url, "description": r.description,
+            "language": r.language, "stars": r.stars, "forks": r.forks,
+            "stars_period": r.stars_period,
+        } for r in repos])
     return repos or None
+
+
+def refresh_official(period: str = "daily", language: str = "", limit: int = 25,
+                     token: str = "", translate: bool = True) -> dict:
+    """只刷新官方趋势页，不跑评分流程。供界面的「手动刷新」按钮调用。"""
+    session = _session(token)
+    url = (f"https://github.com/trending"
+           + (f"/{language.lower()}" if language else "")
+           + {"daily": "", "weekly": "?since=weekly", "monthly": "?since=monthly"}[period])
+
+    repos = fetch_official_trending(session, period, language, limit, force=True)
+    if repos:
+        items = [{
+            "full_name": r.full_name, "url": r.url, "description": r.description,
+            "language": r.language, "stars": r.stars, "forks": r.forks,
+            "stars_period": r.stars_period,
+        } for r in repos]
+        stamp = _save_official_cache(period, language, url, items)
+        ok, stale = True, False
+        message = f"已刷新，抓取到 {len(items)} 个项目"
+    else:
+        cached = load_official_cache(period, language)
+        items = cached.get("items", [])
+        stamp = cached.get("fetched_at", "")
+        ok, stale = False, bool(items)
+        message = (f"实时刷新失败，仍显示缓存于 {stamp} 的快照" if items
+                   else "实时刷新失败，且本地没有可用快照")
+
+    if items and translate:
+        try:
+            from translate import translate_many
+            mapping, _ = translate_many(list(dict.fromkeys(i["description"] for i in items if i.get("description"))))
+            for it in items:
+                it["description_zh"] = mapping.get(it["description"], "")
+        except Exception:
+            pass
+
+    return {"ok": ok, "message": message, "items": items, "fetched_at": stamp,
+            "stale": stale, "url": url, "period": period,
+            "language": language or "全语言"}
 
 
 def search_api(session, period: str, language: str, limit: int, min_stars: int) -> list:
@@ -270,6 +387,27 @@ README_TTL = 6 * 3600
 _api_quota_hit = threading.Event()      # 本轮 API 配额耗尽后不再重试，避免逐个卡 8 秒
 _raw_fails = [0]                        # raw CDN 连续失败计数
 _raw_lock = threading.Lock()
+_meta_stats = {"attempts": 0, "failures": 0}   # 官方条目元数据抓取成功率
+_meta_lock = threading.Lock()
+
+
+def meta_coverage(reset: bool = False) -> int:
+    """官方条目仓库元数据的抓取成功率；配额耗尽时会明显下降。"""
+    with _meta_lock:
+        if reset:
+            _meta_stats["attempts"] = 0
+            _meta_stats["failures"] = 0
+            return 100
+        att, fail = _meta_stats["attempts"], _meta_stats["failures"]
+    return round((att - fail) / att * 100) if att else 100
+
+
+def meta_coverage_from_items(items: list) -> int:
+    """按每条项目的 meta_ok 标记计算；复用旧分数时也能如实反映降级。"""
+    known = [i for i in (items or []) if "meta_ok" in i]
+    if not known:
+        return meta_coverage()
+    return round(sum(1 for i in known if i["meta_ok"]) / len(known) * 100)
 
 
 def _readme_cache_path(repo: "Repo") -> str:
@@ -336,24 +474,33 @@ def enrich(session, repo: Repo) -> None:
             _readme_cache_put(repo, text)
 
     if repo.data_source == "official":
-        try:
-            r = session.get(f"https://api.github.com/repos/{repo.full_name}", timeout=15)
-            if r.status_code == 200:
-                d = r.json()
-                repo.created_at = _parse_dt(d.get("created_at"))
-                repo.pushed_at = _parse_dt(d.get("pushed_at"))
-                repo.open_issues = d.get("open_issues_count") or 0
-                repo.license = ((d.get("license") or {}).get("spdx_id") or "").replace("NOASSERTION", "")
-                repo.topics = d.get("topics") or []
-                repo.homepage = d.get("homepage") or ""
-                repo.archived = bool(d.get("archived"))
-                repo.size_kb = d.get("size") or 0
-                repo.default_branch = d.get("default_branch") or repo.default_branch
-                if repo.created_at:
-                    age = max((dt.datetime.now(dt.timezone.utc) - repo.created_at).total_seconds() / 86400, 1)
-                    repo.velocity = round(repo.stars / age, 1)
-        except Exception:
-            pass
+        ok = False
+        if not _api_quota_hit.is_set():      # 已知配额耗尽就别再逐个发无效请求
+            try:
+                resp = session.get(f"https://api.github.com/repos/{repo.full_name}", timeout=15)
+                if resp.status_code == 200:
+                    d = resp.json()
+                    repo.created_at = _parse_dt(d.get("created_at"))
+                    repo.pushed_at = _parse_dt(d.get("pushed_at"))
+                    repo.open_issues = d.get("open_issues_count") or 0
+                    repo.license = ((d.get("license") or {}).get("spdx_id") or "").replace("NOASSERTION", "")
+                    repo.topics = d.get("topics") or []
+                    repo.homepage = d.get("homepage") or ""
+                    repo.archived = bool(d.get("archived"))
+                    repo.size_kb = d.get("size") or 0
+                    repo.default_branch = d.get("default_branch") or repo.default_branch
+                    if repo.created_at:
+                        age = max((dt.datetime.now(dt.timezone.utc) - repo.created_at).total_seconds() / 86400, 1)
+                        repo.velocity = round(repo.stars / age, 1)
+                    ok = True
+                elif resp.status_code in (403, 429):
+                    _api_quota_hit.set()
+            except Exception:
+                pass
+        with _meta_lock:
+            _meta_stats["attempts"] += 1
+            if not ok:
+                _meta_stats["failures"] += 1
 
 
 # ---------------------------------------------------------------- 打分
@@ -497,25 +644,93 @@ def build_comment(repo: Repo) -> None:
 
 # ---------------------------------------------------------------- 主流程
 
+def attach_scores(items: list, scored: list, period: str = "daily", token: str = "") -> list:
+    """给官方榜单条目补四维评分。已评分的按仓库名复用，未评分的才补抓元数据与 README。
+    与评分看板共用 score_repo / build_comment，口径完全一致。"""
+    by_name = {s.get("full_name"): s for s in (scored or [])}
+    missing = []
+    for it in items:
+        s = by_name.get(it["full_name"])
+        if s and "scores" in s:
+            for k in ("total", "grade", "scores", "reasons", "comment", "category",
+                      "velocity", "meta_ok"):
+                if k in s:
+                    it[k] = s[k]
+        else:
+            missing.append(it)
+
+    if not missing:
+        return items
+
+    session = _session(token)
+    pending = [Repo(
+        full_name=it["full_name"], url=it["url"], description=it.get("description", ""),
+        language=it.get("language", ""), stars=it.get("stars", 0), forks=it.get("forks", 0),
+        stars_period=it.get("stars_period", 0), data_source="official",
+        description_zh=it.get("description_zh", ""),
+    ) for it in missing]
+
+    from concurrent.futures import ThreadPoolExecutor, wait as _wait
+    pool = ThreadPoolExecutor(max_workers=8)
+    try:
+        _wait([pool.submit(enrich, session, r) for r in pending], timeout=12)
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+
+    for r in pending:
+        score_repo(r, period)
+        r.category = classify(r)          # 与评分看板用同一套分类规则（中英双语）
+        build_comment(r)
+    lookup = {r.full_name: r for r in pending}
+    for it in missing:
+        r = lookup[it["full_name"]]
+        it.update({"total": r.total, "grade": r.grade, "scores": r.scores,
+                   "reasons": r.reasons, "comment": r.comment,
+                   "category": r.category, "velocity": r.velocity,
+                   "meta_ok": r.pushed_at is not None})
+    return items
+
+
 def analyze(period: str = "daily", language: str = "", limit: int = 20,
             min_stars: int = 100, token: str = "", source: str = "auto",
             translate: bool = True) -> dict:
     session = _session(token)
     _raw_fails[0] = 0
     _api_quota_hit.clear()
+    meta_coverage(reset=True)
     used = "api"
     repos: list = []
+    official_raw: list = []
+    official_fetched_at = ""
+    official_stale = False
+    official_url = (f"https://github.com/trending"
+                    + (f"/{language.lower()}" if language else "")
+                    + {"daily": "", "weekly": "?since=weekly", "monthly": "?since=monthly"}[period])
 
     if source in ("auto", "official"):
         official = fetch_official_trending(session, period, language, limit)
         if official:
             repos, used = official, "official"
-        elif source == "official":
-            return {"error": "官方趋势页不可达（当前网络无法访问 github.com），请改用「API 推算」"}
+            official_raw = [{
+                "full_name": r.full_name, "url": r.url, "description": r.description,
+                "language": r.language, "stars": r.stars, "forks": r.forks,
+                "stars_period": r.stars_period,
+            } for r in official]
+            official_fetched_at = load_official_cache(period, language).get("fetched_at", "")
+        elif source == "official" and not load_official_cache(period, language).get("items"):
+            return {"error": "官方趋势页不可达（当前网络无法访问 github.com），且本地无缓存；请改用「API 推算」"}
 
     if not repos:
         repos = search_api(session, period, language, limit, min_stars)
         used = "api"
+
+    # 实时抓取失败时，官方视图退回最近一次成功抓取的快照（明确标注为缓存）
+    if not official_raw:
+        cached = load_official_cache(period, language)
+        if cached.get("items"):
+            official_raw = cached["items"]
+            official_fetched_at = cached.get("fetched_at", "")
+            official_stale = True
 
     if not repos:
         return {"error": "未获取到项目，请放宽最低 Star 条件或更换周期"}
@@ -547,12 +762,25 @@ def analyze(period: str = "daily", language: str = "", limit: int = 20,
     if translate:
         try:
             from translate import translate_many
-            trans_map, trans_status = translate_many([r.description for r in repos])
+            # 评分卡片与官方表格共用一次翻译，重复描述由缓存去重
+            texts = [r.description for r in repos] + [it["description"] for it in official_raw]
+            trans_map, trans_status = translate_many(list(dict.fromkeys(t for t in texts if t)))
         except Exception:
             trans_status = "unavailable"
     for r in repos:
         r.description_zh = trans_map.get(r.description, "")
         r.category = classify(r)          # 用中英双语判断，中文关键词也能命中
+    for it in official_raw:
+        it["description_zh"] = trans_map.get(it["description"], "")
+
+    # 官方榜单条目也带上同一套四维评分；评分看板已算过的直接复用，不重复抓
+    scored_dicts = []
+    for r in repos:
+        item = asdict_repo(r)
+        item["meta_ok"] = (r.pushed_at is not None) or (r.data_source != "official")
+        scored_dicts.append(item)
+    if official_raw:
+        attach_scores(official_raw, scored_dicts, period, token)
 
     coverage = round(sum(1 for r in repos if r.readme_ok) / len(repos) * 100) if repos else 0
 
@@ -565,7 +793,15 @@ def analyze(period: str = "daily", language: str = "", limit: int = 20,
         "source_label": "官方趋势页" if used == "official" else "GitHub API 推算（新项目高增长榜）",
         "translate_status": trans_status,
         "readme_coverage": coverage,
-        "items": [asdict_repo(r) for r in repos],
+        "meta_coverage": meta_coverage_from_items(official_raw) if official_raw else 100,
+        "board_meta_coverage": meta_coverage_from_items(scored_dicts),
+        "official_items": official_raw,
+        "official_fetched_at": official_fetched_at,
+        "official_stale": official_stale,
+        "official_period": period,
+        "official_language": language or "全语言",
+        "official_url": official_url,
+        "items": scored_dicts,
     }
 
 

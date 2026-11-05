@@ -60,6 +60,43 @@
   .gradebar{display:flex;gap:2px;height:6px;border-radius:99px;overflow:hidden;margin-top:8px;background:var(--track)}
   .gradebar i{display:block;height:100%}
 
+  /* ---------- 热门板块 ---------- */
+  .sectors{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:10px;margin-bottom:14px}
+  .sector{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;
+    cursor:pointer;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column;gap:2px}
+  .sector:hover{border-color:var(--border-strong);box-shadow:var(--shadow)}
+  .sector.on{border-color:#8250df;box-shadow:0 0 0 2px rgba(130,80,223,.15);background:#fdfaff}
+  .sector .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sector .ct{font-size:11.5px;color:var(--muted)}
+  .sector .top{font-size:11.5px;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sector.all .nm{color:var(--muted)}
+
+  /* ---------- 官方趋势页视图 ---------- */
+  .official-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;
+    background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:12px}
+  .official-head h2{font-size:17px;font-weight:650}
+  .official-head p{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .btn-link{font-size:12.5px;color:var(--accent);text-decoration:none;border:1px solid var(--border-strong);
+    background:#fff;padding:6px 12px;border-radius:8px;font-weight:500}
+  .btn-link:hover{background:#f3f4f6;text-decoration:none}
+  .off-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .official-note{font-size:12px;color:var(--muted);margin-bottom:12px;padding-left:2px}
+  .off-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px}
+  .off-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;
+    display:flex;flex-direction:column;gap:10px;transition:box-shadow .15s,border-color .15s}
+  .off-card:hover{box-shadow:var(--shadow);border-color:var(--border-strong)}
+  .off-nums{display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+  .off-nums b{color:var(--text)}
+  .off-nums .delta{color:var(--green);font-weight:700}
+  .off-bar{height:6px;background:var(--track);border-radius:99px;overflow:hidden}
+  .off-bar i{display:block;height:100%;background:linear-gradient(90deg,#2da44e,#1a7f37);border-radius:99px}
+  .off-noscore{font-size:12px;color:var(--muted);background:#f6f8fa;border:1px dashed var(--border);
+    border-radius:8px;padding:8px 10px;text-align:center}
+  .official-empty{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:36px 24px;
+    text-align:center;color:var(--muted);font-size:13px;line-height:1.8}
+  .official-empty b{color:var(--text);font-size:15px;display:block;margin-bottom:6px}
+  body.view-official .board-only{display:none!important}
+
   /* ---------- 工具条 ---------- */
   .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
   .chips{display:flex;gap:6px}
@@ -179,16 +216,21 @@
   </div>
 
   <div id="stats" class="stats hidden"></div>
+  <div id="sectors" class="sectors hidden"></div>
 
   <div id="toolbar" class="toolbar hidden">
-    <div class="chips" id="chips">
+    <div class="seg" id="viewSeg">
+      <button data-v="board" class="on">评分看板</button>
+      <button data-v="official">官方趋势页</button>
+    </div>
+    <div class="chips board-only" id="chips">
       <div class="chip on" data-g="all">全部</div>
       <div class="chip" data-g="S">S</div>
       <div class="chip" data-g="A">A</div>
       <div class="chip" data-g="B">B</div>
       <div class="chip" data-g="C">C</div>
     </div>
-    <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)">排序
+    <label class="board-only" style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)">排序
       <select id="sort" style="padding:5px 8px">
         <option value="total">总分</option>
         <option value="velocity">Star 增速</option>
@@ -196,9 +238,10 @@
         <option value="pushed">最近提交</option>
       </select>
     </label>
-    <div class="search"><input id="q" type="text" placeholder="搜索仓库名或描述"></div>
+    <div class="search board-only"><input id="q" type="text" placeholder="搜索仓库名或描述"></div>
   </div>
 
+  <section id="officialPanel" class="hidden"></section>
   <div id="grid" class="grid"></div>
 
   <div id="empty" class="empty">
@@ -235,7 +278,7 @@
 </dialog>
 
 <script>
-const state = { period:'daily', data:null, sort:'total', grade:'all', q:'' };
+const state = { period:'daily', data:null, sort:'total', grade:'all', cat:'', q:'', view:'board' };
 const $ = s => document.querySelector(s);
 const LS = 'gh-trending-gui';
 
@@ -264,10 +307,51 @@ $('#seg').addEventListener('click', e=>{
   [...$('#seg').children].forEach(x=>x.classList.toggle('on', x===b));
   state.period = b.dataset.v; savePrefs();
 });
+$('#viewSeg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  [...$('#viewSeg').children].forEach(x=>x.classList.toggle('on', x===b));
+  state.view = b.dataset.v;
+  render();
+});
+$('#officialPanel').addEventListener('click', async e=>{
+  const btn = e.target.closest('#btnOfficialRefresh'); if(!btn) return;
+  const old = btn.textContent;
+  btn.disabled = true; btn.textContent = '刷新中…';
+  try{
+    const qs = new URLSearchParams({
+      period: state.period, language: $('#lang').value, limit: 25
+    });
+    const res = await fetch('/api/official/refresh?' + qs,
+      {headers:{'X-GitHub-Token': $('#token').value || ''}});
+    const d2 = await res.json();
+    if(!res.ok) throw new Error(d2.message || ('HTTP ' + res.status));
+    if(state.data){
+      state.data.official_items = d2.items;
+      state.data.official_fetched_at = d2.fetched_at;
+      state.data.official_stale = d2.stale;
+      state.data.official_url = d2.url;
+      state.data.official_period = d2.period;
+      state.data.official_language = d2.language;
+      if(typeof d2.meta_coverage === 'number') state.data.meta_coverage = d2.meta_coverage;
+    }
+    render();
+    toast(d2.message);
+  }catch(err){
+    toast('刷新失败：' + err.message);
+  }finally{
+    btn.disabled = false; btn.textContent = old;
+  }
+});
 $('#chips').addEventListener('click', e=>{
   const c = e.target.closest('.chip'); if(!c) return;
   [...$('#chips').children].forEach(x=>x.classList.toggle('on', x===c));
   state.grade = c.dataset.g; render();
+});
+$('#sectors').addEventListener('click', e=>{
+  const s = e.target.closest('.sector'); if(!s) return;
+  const v = s.dataset.cat || '';
+  state.cat = (state.cat === v) ? '' : v;   // 再点一次取消筛选
+  render();
 });
 $('#sort').addEventListener('change', e=>{ state.sort = e.target.value; render(); });
 $('#q').addEventListener('input', e=>{ state.q = e.target.value.trim().toLowerCase(); render(); });
@@ -291,6 +375,9 @@ async function run(){
   const btn = $('#btnRun');
   btn.disabled = true; btn.textContent = '分析中…';
   $('#empty').classList.add('hidden');
+  if(state.view === 'official'){
+    $('#officialPanel').innerHTML = `<div class="official-empty">正在读取 GitHub 趋势页…</div>`;
+  }
   $('#grid').innerHTML = Array.from({length:6}).map(()=>`
     <div class="card">
       <div class="skel" style="height:18px;width:55%"></div>
@@ -327,11 +414,19 @@ async function run(){
       data = d2;
     }
     state.data = data;
+    state.cat = '';                    // 新一轮分析重置板块筛选
     $('#btnHtml').disabled = false; $('#btnCsv').disabled = false;
     render();
     toast(`已抓取 ${data.items.length} 个项目 · 来源：${data.source_label}`);
   }catch(err){
+    if(state.view === 'official'){
+      $('#officialPanel').classList.remove('hidden');
+      $('#officialPanel').innerHTML = `<div class="official-empty"><b>抓取失败</b>${escapeHtml(err.message)}<br>请检查网络后重试。</div>`;
+      toast('分析失败：' + err.message);
+      return;
+    }
     $('#grid').innerHTML = '';
+    $('#sectors').classList.add('hidden');
     $('#empty').classList.remove('hidden');
     $('#empty').innerHTML = `<h2>分析失败</h2><p>${escapeHtml(err.message)}</p>
       <p style="margin-top:10px">可尝试：放宽「最低 Star」、切换数据源，或在设置里填入 GitHub Token 提升额度。</p>`;
@@ -345,16 +440,118 @@ function escapeHtml(s){
   return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+/* 评分环与四维条：评分看板、官方榜单卡片共用，保证两处视觉一致 */
+const GRADE_COLOR = {S:'#1a7f37', A:'#0969da', B:'#9a6700', C:'#cf222e'};
+function ringHTML(total, grade){
+  const r = 30, c = 2*Math.PI*r, off = c*(1-total/100);
+  return `<div class="ring">
+    <svg width="74" height="74" viewBox="0 0 74 74">
+      <circle cx="37" cy="37" r="${r}" fill="none" stroke="#eaeef2" stroke-width="6"/>
+      <circle cx="37" cy="37" r="${r}" fill="none" stroke="${GRADE_COLOR[grade]}" stroke-width="6"
+        stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
+    </svg>
+    <div class="num"><b>${total}</b><span>${grade} 级</span></div></div>`;
+}
+function dimRowHTML(label, val, max, c){
+  return `<div class="dim"><span class="lb">${label}</span>
+    <span class="tr"><span class="fl" style="width:${Math.round(val/max*100)}%;background:${c}"></span></span>
+    <em>${val}</em></div>`;
+}
+function scoreBlockHTML(i){
+  const s = i.scores;
+  if(!s) return `<div class="off-noscore">该条目本次未完成评分</div>`;
+  return `<div class="score-line">
+      ${ringHTML(i.total, i.grade)}
+      <div class="dims">
+        ${dimRowHTML('热度', s.popularity, 25, '#1a7f37')}
+        ${dimRowHTML('维护', s.maintenance, 25, '#0969da')}
+        ${dimRowHTML('实用', s.practicality, 30, '#8250df')}
+        ${dimRowHTML('质量', s.quality, 20, '#9a6700')}
+      </div>
+    </div>`;
+}
+
+function renderOfficial(d){
+  const items = d.official_items || [];
+  const panel = $('#officialPanel');
+  const period = d.official_period || d.period;
+  const lang = d.official_language || d.language;
+  const label = {daily:'今日', weekly:'本周', monthly:'本月'}[period] || d.period_label;
+  const head = `
+    <div class="official-head">
+      <div>
+        <h2>GitHub Trending 官方榜单</h2>
+        <p>${label} · ${escapeHtml(lang)} · 共 ${items.length} 个项目 · 顺序与 GitHub 页面一致</p>
+      </div>
+      <div class="off-actions">
+        <button id="btnOfficialRefresh" class="primary" type="button">↻ 手动刷新</button>
+        <a class="btn-link" href="${escapeHtml(d.official_url || 'https://github.com/trending')}"
+           target="_blank" rel="noopener">打开 GitHub 趋势页 ↗</a>
+      </div>
+    </div>`;
+
+  if(!items.length){
+    panel.innerHTML = head + `<div class="official-empty">
+      <b>暂无官方榜单数据</b>
+      官方页当前不可达，且本地没有可用快照。点右上角「手动刷新」重试；<br>
+      评分看板不受影响，仍会按 API 推算模式运行。
+    </div>`;
+    return;
+  }
+  const staleNote = d.official_stale
+    ? `<div class="official-note" style="color:var(--amber);background:var(--amber-soft);border:1px solid #eac54f;
+        border-radius:8px;padding:8px 12px">本次实时刷新失败，以下为缓存于 ${escapeHtml(d.official_fetched_at || '未知时间')} 的官方榜单快照。可点「手动刷新」重试。</div>`
+    : `<div class="official-note">本看板是 GitHub Trending 官方页的原始榜单（含真实的「${label}新增 Star」），并叠加了与评分看板完全相同的四维评分；抓取于 ${escapeHtml(d.official_fetched_at || '本次分析')}。简介已中文化（鼠标悬停可看英文原文）。</div>`;
+
+  const maxDelta = Math.max(1, ...items.map(i=> i.stars_period || 0));
+  const mnote = (typeof d.meta_coverage === 'number' && d.meta_coverage < 60)
+    ? `<div class="official-note" style="color:var(--red);background:var(--red-soft);border:1px solid #ff9a9a;
+        border-radius:8px;padding:8px 12px;margin-top:-4px">仅 ${d.meta_coverage}% 项目取到仓库元数据，本轮维护与质量分偏低，评级仅供参考；多为 GitHub API 配额耗尽，可在「⚙ 设置」填入 Token 后重新分析。</div>` : '';
+  panel.innerHTML = head + staleNote + mnote + `
+    <div class="off-grid">
+      ${items.map((i,n)=>`
+        <article class="off-card">
+          <div class="card-top">
+            <span class="rank">${String(n+1).padStart(2,'0')}</span>
+            <a class="repo" href="${escapeHtml(i.url)}" target="_blank" rel="noopener">${escapeHtml(i.full_name)}</a>
+            ${i.grade ? `<span class="badge g${i.grade}">${i.grade}</span>` : ''}
+            <span class="tag">${escapeHtml(i.language) || '未标注'}</span>
+          </div>
+          <p class="desc" title="${escapeHtml(i.description)}">${escapeHtml(i.description_zh || i.description) || '（无描述）'}</p>
+          <div class="off-nums">
+            <span class="cat">${escapeHtml(i.category || '其他')}</span>
+            <span><b>★ ${i.stars.toLocaleString()}</b></span>
+            <span class="delta">+${i.stars_period.toLocaleString()} ${label}新增</span>
+            <span>Fork ${i.forks.toLocaleString()}</span>
+          </div>
+          <div class="off-bar" title="相对本榜最高增速"><i style="width:${Math.round((i.stars_period||0)/maxDelta*100)}%"></i></div>
+          ${scoreBlockHTML(i)}
+          ${i.comment ? `<div class="comment">${escapeHtml(i.comment)}</div>` : ''}
+        </article>`).join('')}
+    </div>`;
+}
+
 function render(){
   const d = state.data; if(!d) return;
-  $('#empty').classList.add('hidden');
-  $('#stats').classList.remove('hidden');
+  const isOfficial = state.view === 'official';
+  document.body.classList.toggle('view-official', isOfficial);
   $('#toolbar').classList.remove('hidden');
+  $('#officialPanel').classList.toggle('hidden', !isOfficial);
+  ['#stats', '#sectors', '#grid'].forEach(s=> $(s).classList.toggle('hidden', isOfficial));
+  if(isOfficial){
+    $('#empty').classList.add('hidden');
+    renderOfficial(d);
+    return;
+  }
+
+  $('#empty').classList.add('hidden');
   const tnote = {ok:'', quota:' · 翻译额度已用尽，部分简介保留英文',
                  partial:' · 部分简介未译出', unavailable:' · 翻译服务不可用，简介保留英文'}[d.translate_status] || '';
   const rnote = (typeof d.readme_coverage === 'number' && d.readme_coverage < 60)
     ? ` · 仅 ${d.readme_coverage}% 项目取到 README，实用性分数偏低` : '';
-  $('#srcNote').textContent = `${d.generated_at} · ${d.period_label} · ${d.language} · 来源：${d.source_label}${rnote}${tnote}`;
+  const mnote = (typeof d.board_meta_coverage === 'number' && d.board_meta_coverage < 60)
+    ? ` · 仅 ${d.board_meta_coverage}% 项目取到仓库元数据，维护与质量分偏低（通常是 GitHub API 配额耗尽）` : '';
+  $('#srcNote').textContent = `${d.generated_at} · ${d.period_label} · ${d.language} · 来源：${d.source_label}${rnote}${mnote}${tnote}`;
 
   const items = d.items;
   const cnt = {S:0,A:0,B:0,C:0}; items.forEach(i=>cnt[i.grade]++);
@@ -377,8 +574,31 @@ function render(){
     <div class="stat"><div class="k">Star 总量</div><div class="v">${(stars/1000).toFixed(1)}<small>k</small></div></div>
     <div class="stat"><div class="k">增速中位数</div><div class="v">${Math.round(medV).toLocaleString()}<small>star/天</small></div></div>`;
 
+  /* 热门板块：按分类聚合本次结果，点击筛选（再点取消） */
+  const byCat = {};
+  items.forEach(i=>{ const k = i.category || '其他'; (byCat[k] = byCat[k] || []).push(i); });
+  const cats = Object.entries(byCat)
+    .map(([k, arr])=>[k, arr, arr.reduce((a,b)=> a.total >= b.total ? a : b)])
+    .sort((a,b)=> (a[0]==='其他') - (b[0]==='其他')          // 「其他」固定排最后
+                 || b[1].length - a[1].length
+                 || b[2].total - a[2].total);
+  $('#sectors').classList.remove('hidden');
+  $('#sectors').innerHTML =
+    `<div class="sector all${state.cat===''?' on':''}" data-cat="">
+       <span class="nm">全部板块</span>
+       <span class="ct">${items.length} 个项目</span>
+       <span class="top">按总分排序</span>
+     </div>` +
+    cats.map(([k, arr, top])=> `
+      <div class="sector${state.cat===k?' on':''}" data-cat="${escapeHtml(k)}" title="${escapeHtml(k)}：${arr.map(x=>x.full_name).join('、')}">
+        <span class="nm">${escapeHtml(k)}</span>
+        <span class="ct">${arr.length} 个项目</span>
+        <span class="top">最热 ${escapeHtml(top.full_name.split('/')[1])}</span>
+      </div>`).join('');
+
   /* 过滤 + 排序 */
   let list = items.filter(i=> state.grade==='all' || i.grade===state.grade);
+  if(state.cat) list = list.filter(i=> (i.category || '其他') === state.cat);
   if(state.q) list = list.filter(i=>
     i.full_name.toLowerCase().includes(state.q) || (i.description||'').toLowerCase().includes(state.q));
   const key = {total:i=>i.total, velocity:i=>i.velocity, stars:i=>i.stars,
@@ -388,25 +608,9 @@ function render(){
   if(!list.length){
     $('#grid').innerHTML = '';
     $('#empty').classList.remove('hidden');
-    $('#empty').innerHTML = `<h2>没有符合条件的项目</h2><p>换个评级、清空搜索词，或放宽「最低 Star」再试。</p>`;
+    $('#empty').innerHTML = `<h2>没有符合条件的项目</h2><p>取消板块筛选、换个评级、清空搜索词，或放宽「最低 Star」再试。</p>`;
     return;
   }
-
-  const color = {S:'#1a7f37', A:'#0969da', B:'#9a6700', C:'#cf222e'};
-  const ring = (total, grade) => {
-    const r = 30, c = 2*Math.PI*r, off = c*(1-total/100);
-    return `<div class="ring">
-      <svg width="74" height="74" viewBox="0 0 74 74">
-        <circle cx="37" cy="37" r="${r}" fill="none" stroke="#eaeef2" stroke-width="6"/>
-        <circle cx="37" cy="37" r="${r}" fill="none" stroke="${color[grade]}" stroke-width="6"
-          stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
-      </svg>
-      <div class="num"><b>${total}</b><span>${grade} 级</span></div></div>`;
-  };
-  const dimRow = (label, val, max, c) => `
-    <div class="dim"><span class="lb">${label}</span>
-      <span class="tr"><span class="fl" style="width:${Math.round(val/max*100)}%;background:${c}"></span></span>
-      <em>${val}</em></div>`;
 
   $('#grid').innerHTML = list.map((i, idx)=>{
     const s = i.scores;
@@ -435,12 +639,12 @@ function render(){
         <span class="tag">${escapeHtml(i.language) || '未标注'}</span>
       </div>
       <div class="score-line">
-        ${ring(i.total, i.grade)}
+        ${ringHTML(i.total, i.grade)}
         <div class="dims">
-          ${dimRow('热度', s.popularity, 25, '#1a7f37')}
-          ${dimRow('维护', s.maintenance, 25, '#0969da')}
-          ${dimRow('实用', s.practicality, 30, '#8250df')}
-          ${dimRow('质量', s.quality, 20, '#9a6700')}
+          ${dimRowHTML('热度', s.popularity, 25, '#1a7f37')}
+          ${dimRowHTML('维护', s.maintenance, 25, '#0969da')}
+          ${dimRowHTML('实用', s.practicality, 30, '#8250df')}
+          ${dimRowHTML('质量', s.quality, 20, '#9a6700')}
         </div>
       </div>
       <div class="comment">${escapeHtml(i.comment)}</div>

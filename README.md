@@ -11,9 +11,9 @@
 
 ## 效果预览
 
-| Skill 输出的 HTML 报告 | 可视化应用的看板 |
-|---|---|
-| ![报告预览](docs/demo-report.png) | ![应用预览](docs/app-preview.png) |
+| Skill 输出的 HTML 报告 | 应用的评分看板 | 应用的官方趋势页视图 |
+|---|---|---|
+| ![报告预览](docs/demo-report.png) | ![评分看板](docs/app-preview.png) | ![官方趋势页视图](docs/official-preview.png) |
 
 ## 快速开始
 
@@ -57,7 +57,14 @@ python app.py --window        # 原生窗口；去掉 --window 则用浏览器�
 
 **Skill**：对话内清单（总分、四维得分、评级、亮点、使用方式、点评）+ 独立 HTML 报告 `github-trending-YYYY-MM-DD-{today|weekly|monthly}.html`。
 
-**应用**：卡片看板（可排序 / 筛选 / 搜索）+ 四维评分展开依据 + 导出 HTML 报告与 CSV。CSV 含分类、中英简介、四维分项与点评。
+**应用**提供两个视图：
+
+| 视图 | 内容 |
+|---|---|
+| 评分看板 | 卡片按总分排序，含分类标签、中文简介、四维评分与逐条评分依据；支持评级筛选、排序、搜索、分类板块栏 |
+| 官方趋势页 | `github.com/trending` 原始榜单顺序，含真实的「周期新增 Star」；同样叠加四维评分、分类与点评，可一键打开原页、单独手动刷新 |
+
+导出 HTML 报告与 CSV；CSV 含分类、中英简介、四维分项与点评。
 
 示例报告：[docs/index.html](docs/index.html)（2026-11-01 今日榜实跑输出）。
 
@@ -69,7 +76,9 @@ python app.py --window        # 原生窗口；去掉 --window 则用浏览器�
 ├── LICENSE
 ├── docs/
 │   ├── demo-report.png       # Skill 输出报告示例
-│   └── app-preview.png       # 应用界面示例
+│   ├── index.html            # 示例报告（可打开）
+│   ├── app-preview.png       # 评分看板界面
+│   └── official-preview.png  # 官方趋势页视图界面
 ├── github-trending-analyzer/ # Agent Skill
 │   ├── SKILL.md              # 工作流、输入参数、输出规范
 │   ├── references/scoring.md # 评分细则
@@ -85,6 +94,9 @@ python app.py --window        # 原生窗口；去掉 --window 则用浏览器�
 ## 数据来源与边界
 
 - 榜单优先取 `github.com/trending` 官方页；网页不可达时应用会降级为 GitHub API 推算（按「创建时间 + Star 增速」估算），并在界面标注来源，**不把推算说成官方数据**；
+- 官方页在部分网络下间歇性可达：实时抓取失败时展示本地快照，界面用黄色提示条写明快照时间，**不把缓存冒充实时数据**；连续失败后熔断 5 分钟，「手动刷新」可强制重试；
+- 官方视图与评分看板共用同一套评分与分类函数，同一项目两处结果一致；手动刷新只更新官方榜单，不重跑评分；
+- Star 数、评分、描述均来自实际抓取，缺失字段标注「未获取到」，禁止编造；配额不足导致元数据缺失时界面会明确提示「评级仅供参考」；
 - Star 数、评分、描述均来自实际抓取，缺失字段标注「未获取到」，禁止编造；
 - 应用的打分是规则计算，可复算、每次一致，但不等于人工判断；Skill 的点评由 LLM 生成，代价是每次结果可能有差异。
 
