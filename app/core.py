@@ -693,7 +693,7 @@ def attach_scores(items: list, scored: list, period: str = "daily", token: str =
 
 def analyze(period: str = "daily", language: str = "", limit: int = 20,
             min_stars: int = 100, token: str = "", source: str = "auto",
-            translate: bool = True) -> dict:
+            translate: bool = True, include_official: bool = True) -> dict:
     session = _session(token)
     _raw_fails[0] = 0
     _api_quota_hit.clear()
@@ -703,6 +703,9 @@ def analyze(period: str = "daily", language: str = "", limit: int = 20,
     official_raw: list = []
     official_fetched_at = ""
     official_stale = False
+    official_skipped = not include_official
+    if official_skipped:
+        source = "api"                # 用户关掉「含官方页」：本次不抓官方页，直接用 API 推算评分
     official_url = (f"https://github.com/trending"
                     + (f"/{language.lower()}" if language else "")
                     + {"daily": "", "weekly": "?since=weekly", "monthly": "?since=monthly"}[period])
@@ -798,6 +801,7 @@ def analyze(period: str = "daily", language: str = "", limit: int = 20,
         "official_items": official_raw,
         "official_fetched_at": official_fetched_at,
         "official_stale": official_stale,
+        "official_skipped": official_skipped,
         "official_period": period,
         "official_language": language or "全语言",
         "official_url": official_url,

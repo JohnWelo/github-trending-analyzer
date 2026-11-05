@@ -44,6 +44,9 @@
   .seg button{border:none;background:transparent;padding:6px 14px;border-radius:7px;color:var(--muted);font-weight:500}
   .seg button.on{background:#fff;color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(27,31,36,.12)}
   .controls label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+  .off-switch{white-space:nowrap;cursor:pointer;user-select:none;border:1px solid var(--border);
+    background:#f6f8fa;border-radius:8px;padding:5px 10px;color:var(--text)}
+  .off-switch input{width:14px;height:14px;margin:0;accent-color:var(--green);cursor:pointer}
   select,input[type=number],input[type=text],input[type=password]{
     font-family:inherit;font-size:13px;color:var(--text);background:#fff;border:1px solid var(--border-strong);
     border-radius:7px;padding:6px 9px;outline:none}
@@ -199,6 +202,10 @@
       <button data-v="weekly">本周</button>
       <button data-v="monthly">本月</button>
     </div>
+    <label class="off-switch" title="关闭后，点「开始分析」不再抓取官方趋势页，直接用 API 推算评分">
+      <input type="checkbox" id="includeOfficial" checked> 含官方页
+    </label>
+    <button id="btnOfficialTop" title="只刷新官方趋势页（复用已有评分），并自动切到该视图">↻ 官方页</button>
     <label>语言
       <select id="lang">
         <option value="">全语言</option>
@@ -292,13 +299,31 @@ function loadPrefs(){
     if(p.minStars !== undefined) $('#minStars').value = p.minStars;
     if(p.token) $('#token').value = p.token;
     if(p.src) $('#src').value = p.src;
+    if(p.includeOfficial !== undefined) $('#includeOfficial').checked = !!p.includeOfficial;
+    if(p.view === 'official' || p.view === 'board') state.view = p.view;
   }catch(e){}
 }
 function savePrefs(){
   localStorage.setItem(LS, JSON.stringify({
     period: state.period, language: $('#lang').value, limit: $('#limit').value,
-    minStars: $('#minStars').value, token: $('#token').value, src: $('#src').value
+    minStars: $('#minStars').value, token: $('#token').value, src: $('#src').value,
+    includeOfficial: $('#includeOfficial').checked, view: state.view
   }));
+}
+
+/* 启动恢复：把服务端持久化的上一次分析结果直接渲染出来 */
+async function restoreLast(){
+  try{
+    const res = await fetch('/api/last');
+    const d = await res.json();
+    if(!d || d.empty || !Array.isArray(d.items)) return;
+    state.data = d;
+    state.cat = '';
+    $('#btnHtml').disabled = false; $('#btnCsv').disabled = false;
+    [...$('#viewSeg').children].forEach(x=>x.classList.toggle('on', x.dataset.v === state.view));
+    render();
+    toast(`已恢复上次分析（${d.generated_at}）`);
+  }catch(e){ /* 没有历史结果时静默 */ }
 }
 
 /* ---------- 交互 ---------- */
@@ -307,14 +332,17 @@ $('#seg').addEventListener('click', e=>{
   [...$('#seg').children].forEach(x=>x.classList.toggle('on', x===b));
   state.period = b.dataset.v; savePrefs();
 });
+$('#includeOfficial').addEventListener('change', savePrefs);
 $('#viewSeg').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
   [...$('#viewSeg').children].forEach(x=>x.classList.toggle('on', x===b));
   state.view = b.dataset.v;
+  savePrefs();
   render();
 });
-$('#officialPanel').addEventListener('click', async e=>{
-  const btn = e.target.closest('#btnOfficialRefresh'); if(!btn) return;
+
+/* 两个入口共用：只刷新官方榜单，复用已有评分，不重跑评分流程 */
+async function refreshOfficial(btn){
   const old = btn.textContent;
   btn.disabled = true; btn.textContent = '刷新中…';
   try{
@@ -325,14 +353,25 @@ $('#officialPanel').addEventListener('click', async e=>{
       {headers:{'X-GitHub-Token': $('#token').value || ''}});
     const d2 = await res.json();
     if(!res.ok) throw new Error(d2.message || ('HTTP ' + res.status));
-    if(state.data){
-      state.data.official_items = d2.items;
-      state.data.official_fetched_at = d2.fetched_at;
-      state.data.official_stale = d2.stale;
-      state.data.official_url = d2.url;
-      state.data.official_period = d2.period;
-      state.data.official_language = d2.language;
-      if(typeof d2.meta_coverage === 'number') state.data.meta_coverage = d2.meta_coverage;
+    if(!state.data){
+      state.data = {
+        generated_at: d2.fetched_at, period: d2.period,
+        period_label: {daily:'今日', weekly:'本周', monthly:'本月'}[d2.period],
+        language: d2.language, source: 'api', source_label: '官方趋势页（独立刷新）',
+        items: [], readme_coverage: 100, board_meta_coverage: 100, translate_status: 'ok'
+      };
+    }
+    state.data.official_items = d2.items;
+    state.data.official_fetched_at = d2.fetched_at;
+    state.data.official_stale = d2.stale;
+    state.data.official_url = d2.url;
+    state.data.official_period = d2.period;
+    state.data.official_language = d2.language;
+    if(typeof d2.meta_coverage === 'number') state.data.meta_coverage = d2.meta_coverage;
+    if(btn.id === 'btnOfficialTop'){       // 顶部按钮点了直接看结果
+      state.view = 'official';
+      [...$('#viewSeg').children].forEach(x=>x.classList.toggle('on', x.dataset.v === 'official'));
+      savePrefs();
     }
     render();
     toast(d2.message);
@@ -341,7 +380,12 @@ $('#officialPanel').addEventListener('click', async e=>{
   }finally{
     btn.disabled = false; btn.textContent = old;
   }
+}
+$('#officialPanel').addEventListener('click', e=>{
+  const btn = e.target.closest('#btnOfficialRefresh'); if(!btn) return;
+  refreshOfficial(btn);
 });
+$('#btnOfficialTop').addEventListener('click', e=> refreshOfficial(e.currentTarget));
 $('#chips').addEventListener('click', e=>{
   const c = e.target.closest('.chip'); if(!c) return;
   [...$('#chips').children].forEach(x=>x.classList.toggle('on', x===c));
@@ -393,7 +437,8 @@ async function run(){
       limit: parseInt($('#limit').value) || 20,
       min_stars: parseInt($('#minStars').value) || 0,
       token: $('#token').value,
-      source: $('#src').value
+      source: $('#src').value,
+      include_official: $('#includeOfficial').checked
     };
     let data;
     try{
@@ -406,7 +451,8 @@ async function run(){
       // POST 被拦截或失败时，自动走 GET 备用通道
       const qs = new URLSearchParams({
         period: body.period, language: body.language, limit: body.limit,
-        min_stars: body.min_stars, source: body.source
+        min_stars: body.min_stars, source: body.source,
+        include_official: body.include_official ? 1 : 0
       });
       const res2 = await fetch('/api/analyze?' + qs, {headers:{'X-GitHub-Token': body.token || ''}});
       const d2 = await res2.json();
@@ -498,9 +544,12 @@ function renderOfficial(d){
     </div>`;
     return;
   }
-  const staleNote = d.official_stale
+  const staleNote = (d.official_skipped && d.official_stale)
     ? `<div class="official-note" style="color:var(--amber);background:var(--amber-soft);border:1px solid #eac54f;
-        border-radius:8px;padding:8px 12px">本次实时刷新失败，以下为缓存于 ${escapeHtml(d.official_fetched_at || '未知时间')} 的官方榜单快照。可点「手动刷新」重试。</div>`
+        border-radius:8px;padding:8px 12px">本次分析未抓取官方趋势页（「含官方页」已关闭），以下为缓存于 ${escapeHtml(d.official_fetched_at || '未知时间')} 的快照。开启开关重新分析，或点「↻ 官方页」单独刷新即可取最新数据。</div>`
+    : d.official_stale
+    ? `<div class="official-note" style="color:var(--amber);background:var(--amber-soft);border:1px solid #eac54f;
+        border-radius:8px;padding:8px 12px">本次实时刷新失败，以下为缓存于 ${escapeHtml(d.official_fetched_at || '未知时间')} 的官方榜单快照。可点「↻ 官方页」重试。</div>`
     : `<div class="official-note">本看板是 GitHub Trending 官方页的原始榜单（含真实的「${label}新增 Star」），并叠加了与评分看板完全相同的四维评分；抓取于 ${escapeHtml(d.official_fetched_at || '本次分析')}。简介已中文化（鼠标悬停可看英文原文）。</div>`;
 
   const maxDelta = Math.max(1, ...items.map(i=> i.stars_period || 0));
@@ -655,7 +704,9 @@ function render(){
 }
 
 loadPrefs();
+[...$('#viewSeg').children].forEach(x=>x.classList.toggle('on', x.dataset.v === state.view));
 render();
+restoreLast();
 </script>
 </body>
 </html>

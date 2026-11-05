@@ -41,6 +41,8 @@ python app.py --window        # 原生窗口；去掉 --window 则用浏览器�
 
 详见 [app/README.md](app/README.md)。
 
+应用会把上一次分析结果写入本地 `cache/last-result.json`，重开时自动恢复，不必重新抓取。参数栏的「含官方页」开关决定本次分析是否抓取官方趋势页，「↻ 官方页」按钮可单独只刷新官方榜单。
+
 ## 评分细则
 
 | 维度 | 分值 | 依据 |
