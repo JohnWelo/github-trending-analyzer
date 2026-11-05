@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub 热门项目分析报告 · {{ r.generated_at }}</title>
+<style>
+  :root{--bg:#f6f8fa;--card:#fff;--border:#e1e4e8;--text:#24292f;--muted:#57606a;
+        --accent:#0969da;--green:#1a7f37;--orange:#d4a72c;--red:#cf222e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--text);padding:32px 20px;line-height:1.6}
+  .container{max-width:1200px;margin:0 auto}
+  header{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px 28px;margin-bottom:24px;
+         display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+  header h1{font-size:24px;font-weight:700}
+  header .meta{color:var(--muted);font-size:14px;margin-top:4px}
+  .legend{font-size:13px;color:var(--muted)}
+  .legend b{font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:20px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 22px;
+        display:flex;flex-direction:column;gap:12px}
+  .card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .card-head h2{font-size:17px;font-weight:700}
+  .card-head h2 a{color:var(--accent);text-decoration:none}
+  .rank{color:var(--muted);font-size:13px;font-weight:600;margin-right:6px}
+  .lang{font-size:12px;font-weight:600;color:var(--accent);background:#ddf4ff;padding:2px 10px;border-radius:999px;white-space:nowrap}
+  .cat{font-size:12px;font-weight:600;color:#8250df;background:#fbefff;border:1px solid #e6c9ff;
+       padding:2px 10px;border-radius:999px;white-space:nowrap}
+  .desc{font-size:14px;color:var(--muted)}
+  .desc-en{font-size:11.5px;color:#8c959f;margin-top:-6px}
+  .stars{font-size:13px;color:var(--muted)}
+  .stars b{color:var(--text)}
+  .score-row{display:flex;align-items:center;gap:12px}
+  .score-num{font-size:28px;font-weight:800;min-width:56px}
+  .grade{font-size:12px;font-weight:700;padding:3px 10px;border-radius:6px;color:#fff}
+  .gS{background:var(--green)}.gA{background:var(--accent)}.gB{background:var(--orange)}.gC{background:var(--red)}
+  .bar-track{flex:1;height:8px;background:#eaeef2;border-radius:999px;overflow:hidden}
+  .bar-fill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#2da44e,#1a7f37)}
+  .dims{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;font-size:12px;color:var(--muted)}
+  .dim{display:flex;align-items:center;gap:8px}
+  .dim .bar-track{height:6px}
+  .dim .bar-fill{background:var(--accent)}
+  .dim em{font-style:normal;font-weight:600;min-width:26px;text-align:right;color:var(--text)}
+  .comment{font-size:13px;color:var(--muted);border-top:1px dashed var(--border);padding-top:10px}
+  .comment b{color:var(--green)}
+  .facts{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+  footer{margin-top:28px;text-align:center;font-size:12px;color:var(--muted);line-height:1.8}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <h1>GitHub 热门项目分析报告</h1>
+      <div class="meta">{{ r.generated_at }} · {{ r.period_label }} · {{ r.language }} · 共 {{ r['items']|length }} 个项目 · 数据来源：{{ r.source_label }}</div>
+    </div>
+    <div class="legend">评级：<b>S</b> 强烈推荐 · <b>A</b> 推荐 · <b>B</b> 值得关注 · <b>C</b> 一般</div>
+  </header>
+
+  <div class="grid">
+  {% for i in r['items'] %}
+    <article class="card">
+      <div class="card-head">
+        <h2><span class="rank">#{{ loop.index }}</span><a href="{{ i.url }}" target="_blank">{{ i.full_name }}</a></h2>
+        <span class="cat">{{ i.category or '其他' }}</span>
+        <span class="lang">{{ i.language or '未标注' }}</span>
+      </div>
+      <p class="desc">{{ i.description_zh or i.description or '（无描述）' }}</p>
+      {% if i.description_zh and i.description_zh != i.description %}
+      <p class="desc-en">EN · {{ i.description }}</p>
+      {% endif %}
+      <div class="stars"><b>★ {{ '{:,}'.format(i.stars) }}</b> · 增速 ≈ {{ '{:,.0f}'.format(i.velocity) }} star/天{% if i.license %} · {{ i.license }}{% endif %}</div>
+      <div class="score-row">
+        <span class="score-num">{{ i.total }}</span>
+        <div class="bar-track"><span class="bar-fill" style="width:{{ i.total }}%"></span></div>
+        <span class="grade g{{ i.grade }}">{{ i.grade }}</span>
+      </div>
+      <div class="dims">
+        <div class="dim"><span>热度</span><div class="bar-track"><span class="bar-fill" style="width:{{ (i.scores.popularity/25*100)|round|int }}%"></span></div><em>{{ i.scores.popularity }}</em></div>
+        <div class="dim"><span>维护</span><div class="bar-track"><span class="bar-fill" style="width:{{ (i.scores.maintenance/25*100)|round|int }}%"></span></div><em>{{ i.scores.maintenance }}</em></div>
+        <div class="dim"><span>实用</span><div class="bar-track"><span class="bar-fill" style="width:{{ (i.scores.practicality/30*100)|round|int }}%"></span></div><em>{{ i.scores.practicality }}</em></div>
+        <div class="dim"><span>质量</span><div class="bar-track"><span class="bar-fill" style="width:{{ (i.scores.quality/20*100)|round|int }}%"></span></div><em>{{ i.scores.quality }}</em></div>
+      </div>
+      <div class="facts">
+        {% if i.created_at %}<span>创建 {{ i.created_at }}</span>{% endif %}
+        {% if i.pushed_at %}<span>更新 {{ i.pushed_at }}</span>{% endif %}
+        <span>Open Issues {{ i.open_issues }}</span>
+        <span>Fork {{ '{:,}'.format(i.forks) }}</span>
+      </div>
+      <div class="comment"><b>点评</b>：{{ i.comment }}</div>
+    </article>
+  {% endfor %}
+  </div>
+
+  <footer>
+    由「GitHub 热门项目分析」桌面工具生成 · 评分口径与 github-trending-analyzer skill 一致<br>
+    规则打分是对评分细则的可解释近似，原始信号可在工具界面逐项展开核对。
+  </footer>
+</div>
+</body>
+</html>

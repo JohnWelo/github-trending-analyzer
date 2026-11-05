@@ -1,80 +1,93 @@
 # GitHub Trending Analyzer · GitHub 热门项目分析
 
-一个可复用的 AI Agent Skill：自动抓取 GitHub Trending 趋势榜，逐个读取仓库 README 与元数据，按四维评分输出带评级的项目清单，并生成可视化网页报告（项目卡片 + 评分柱状图）。每天帮你省下手动翻榜的时间。
+抓取 GitHub 趋势榜，按四维评分（S/A/B/C）输出项目清单与可视化报告。仓库包含两套实现：
+
+| 目录 | 形态 | 适合场景 |
+|---|---|---|
+| [`github-trending-analyzer/`](github-trending-analyzer/) | Agent Skill（提示词资产） | **深读**：真的打开仓库页读 README、判断项目价值、写个性化点评 |
+| [`app/`](app/) | 本地可视化应用（Flask + pywebview） | **快筛**：选周期即出榜，可排序筛选、可复算、可导出 HTML/CSV |
+
+两者共用同一套评分口径，输出可以互相衔接：应用导出的 CSV 丢回对话，让 skill 在候选清单上做深读。
 
 ## 效果预览
 
-![GitHub 今日热门项目榜效果预览](docs/demo-report.png)
+| Skill 输出的 HTML 报告 | 可视化应用的看板 |
+|---|---|
+| ![报告预览](docs/demo-report.png) | ![应用预览](docs/app-preview.png) |
 
-*上图：2026-11-01 今日榜实跑输出（14 个项目，卡片 + 四维评分柱状图，按总分降序）*
+## 快速开始
 
-## 功能特性
+### 用 Skill（无需依赖）
 
-- 📈 自动抓取 GitHub 今日 / 本周 / 本月趋势榜，支持按语言过滤
-- 📖 自动读取各仓库 README 与元数据（最近提交、许可证、Issues）
-- ⭐ 四维评分：受欢迎度(25) / 维护活跃度(25) / 实用可应用性(30) / 技术栈质量(20)，总分 100
-- 🏅 评级：S(≥90) / A(75-89) / B(60-74) / C(<60)，附每条点评
-- 🖥️ 自动生成可视化 HTML 报告：项目卡片 + 四维评分柱状图，按总分降序
-- ✅ 数据全部来自真实抓取，禁止编造
-
-## 目录结构
-
-```
-github-trending-analyzer/
-├── SKILL.md                  # 主指令：5 步工作流 + 输入参数 + 输出规范
-├── references/
-│   └── scoring.md            # 四维评分细则
-└── assets/
-    └── template.html         # 可视化报告模板
-```
-
-## 安装
-
-本 Skill 适配支持 Agent Skills 的平台，无需安装依赖、无需 API Key、无需登录：
+把 `github-trending-analyzer/` 整个文件夹放入 Agent 的技能目录即可：
 
 | 平台 | 安装位置 |
 |---|---|
 | 豆包工作 | `workspace/.user_skills/` |
 | Claude Code | `~/.claude/skills/` |
+| WorkBuddy | `~/.workbuddy/skills/` |
 
-将 `github-trending-analyzer` 整个文件夹放入上述技能目录即可。
+然后对 Agent 说：「分析今日 GitHub 热门项目」「本周 Python 热榜有哪些好项目」。
 
-## 使用方法
+### 用可视化应用
 
-对 AI Agent 直接说：
+```bash
+cd app
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python app.py --window        # 原生窗口；去掉 --window 则用浏览器打开
+```
 
-- 「分析今日 GitHub 热门项目」
-- 「本周 Python 热榜有哪些好项目」
-- 「帮我整理本月 GitHub 趋势榜，输出评分报告」
-
-**输入参数**
-
-| 参数 | 取值 | 默认 |
-|---|---|---|
-| 时间范围 | today / weekly / monthly | today |
-| 语言过滤 | 任意语言（如 Python、TypeScript） | 全部语言 |
-| 数量上限 | 数字 | 全部在榜项目 |
+详见 [app/README.md](app/README.md)。
 
 ## 评分细则
 
-| 维度 | 分值 | 说明 |
+| 维度 | 分值 | 依据 |
 |---|---|---|
 | 受欢迎度 | 25 | 周期新增 Star、总 Star |
-| 维护活跃度 | 25 | 最近提交 / Release、Issue 响应 |
-| 实用可应用性 | 30 | 用途明确、文档齐全、可落地 |
-| 技术栈质量 | 20 | 技术主流性、工程规范 |
+| 维护活跃度 | 25 | 最近提交、Release、Issue 规模 |
+| 实用可应用性 | 30 | 用途明确度、文档与示例、可落地性 |
+| 技术栈质量 | 20 | 技术主流性、许可证、CI、工程规范 |
+
+评级：S ≥ 90 强烈推荐 / A 75–89 推荐 / B 60–74 值得关注 / C < 60 一般。
+完整打分参考见 [`github-trending-analyzer/references/scoring.md`](github-trending-analyzer/references/scoring.md)。
 
 ## 输出
 
-1. **对话内清单**：按总分排序，每条含基本信息、简介、四维得分、评级、亮点、使用方式、点评
-2. **HTML 报告**：命名规范 `github-trending-YYYY-MM-DD-{today|weekly|monthly}.html`，项目卡片 + 评分柱状图
+**Skill**：对话内清单（总分、四维得分、评级、亮点、使用方式、点评）+ 独立 HTML 报告 `github-trending-YYYY-MM-DD-{today|weekly|monthly}.html`。
 
-## 注意事项
+**应用**：卡片看板（可排序 / 筛选 / 搜索）+ 四维评分展开依据 + 导出 HTML 报告与 CSV。CSV 含分类、中英简介、四维分项与点评。
 
-- 抓取 GitHub 公开页面即可，无需登录
-- 个别仓库页面 / API 可能受访问限制（robots、rate limit），此时改用 GitHub 搜索页兜底，如实标注数据缺口，**禁止编造**
-- 周期性运行建议使用默认参数（今日榜、全语言）
+示例报告：[docs/index.html](docs/index.html)（2026-11-01 今日榜实跑输出）。
+
+## 目录结构
+
+```
+.
+├── README.md
+├── LICENSE
+├── docs/
+│   ├── demo-report.png       # Skill 输出报告示例
+│   └── app-preview.png       # 应用界面示例
+├── github-trending-analyzer/ # Agent Skill
+│   ├── SKILL.md              # 工作流、输入参数、输出规范
+│   ├── references/scoring.md # 评分细则
+│   └── assets/template.html  # 报告模板
+└── app/                      # 可视化应用
+    ├── app.py                # Flask 服务与导出
+    ├── core.py               # 抓取、分类、打分
+    ├── translate.py          # 简介翻译（含缓存）
+    ├── templates/            # 看板与报告模板
+    └── assets/
+```
+
+## 数据来源与边界
+
+- 榜单优先取 `github.com/trending` 官方页；网页不可达时应用会降级为 GitHub API 推算（按「创建时间 + Star 增速」估算），并在界面标注来源，**不把推算说成官方数据**；
+- Star 数、评分、描述均来自实际抓取，缺失字段标注「未获取到」，禁止编造；
+- 应用的打分是规则计算，可复算、每次一致，但不等于人工判断；Skill 的点评由 LLM 生成，代价是每次结果可能有差异。
 
 ## License
 
-MIT，详见 [LICENSE](LICENSE) 文件。
+MIT，详见 [LICENSE](LICENSE)。

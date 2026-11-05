@@ -4,6 +4,11 @@
 # Python
 __pycache__/
 *.py[cod]
+.venv/
+venv/
+
+# 运行时缓存（README 正文、译文）
+cache/
 
 # Agent 产物预览缓存
 .preview/

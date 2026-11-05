@@ -88,3 +88,10 @@ description: 分析 GitHub Trending 热门项目并输出可视化评分报告�
 - 页面结构变化导致抓取失败时，改用 GitHub 搜索页或仓库页兜底，不终止任务
 - 周期性自动运行（如每日分析）时使用默认参数：today、全语言、25 条
 - 语言过滤时忽略 Unknown 语言（README/文档类仓库）
+
+## 配套可视化应用（快筛用）
+
+同一套评分口径另有一份本地可视化实现（本仓库 `app/` 目录），用户如需「秒级出榜 + 交互筛选 + 导出」而非深读报告，可引导其使用：
+
+- 启动：`cd app && python app.py --window`（依赖 flask / requests / pywebview）
+- 差别：应用用规则打分（可复算、每次一致），本 skill 用 LLM 判断（能读 README、给个性化点评）。需要深入判断时，让应用导出 CSV 后再由本 skill 深读。
