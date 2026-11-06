@@ -53,7 +53,7 @@ description: 分析 GitHub Trending 热门项目并输出可视化评分报告�
 - 许可证（LICENSE）
 - 是否展示 used-by / 引用案例
 
-若某仓库页无法打开或信息缺失，用 GitHub 搜索页 `https://github.com/search?q=<repo>` 补齐，不编造数据。
+若某仓库页无法打开或信息缺失，用 GitHub 搜索页 `https://github.com/search?q=<repo>` 补齐；仍补不到就按第 2 步规则标注「未获取到」，不编造数据，也不为凑齐数量补造项目。
 
 ### 4. 评分
 
@@ -85,7 +85,7 @@ description: 分析 GitHub Trending 热门项目并输出可视化评分报告�
 ## 注意事项
 
 - 数据必须来自实际抓取，禁止编造 star 数、评分或描述；不确定的数值标注「≈」并注明依据
-- 页面结构变化导致抓取失败时，改用 GitHub 搜索页或仓库页兜底，不终止任务
+- 如果 Trending 页打不开或页面结构变化 → 改用 GitHub 搜索页 `https://github.com/search?q=<repo>` 或仓库主页补齐 → 仍拿不到周期新增 Star 等字段时标「未获取到」，不编造数值，不把无法核验的项目伪装成榜单结果，并在报告里说明可核验范围
 - 周期性自动运行（如每日分析）时使用默认参数：today、全语言、25 条
 - 语言过滤时忽略 Unknown 语言（README/文档类仓库）
 

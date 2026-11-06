@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "prompt": "整理本周 GitHub Trending 上 TypeScript 项目的前 10 个，给我一份带评分的可视化报告",
+    "expected": "解析出 since=weekly、语言 TypeScript、上限 10；访问 https://github.com/trending/typescript?since=weekly；逐项抓取仓库全名/描述/语言/总 Star/周期新增 Star，缺失字段标「未获取到」；读 references/scoring.md 按 25/25/30/20 四维度打分并给价值点+风险点；按 assets/template.html 生成 HTML，文件名 github-trending-<日期>-weekly.html 并用 present_files 交付；数据必须真实抓取，不编造。"
+  },
+  {
+    "id": 2,
+    "prompt": "GitHub Trending 页面打不开，你按印象给我列 10 个本周热门项目并打分吧",
+    "expected": "明确拒绝「按印象列」；按注意事项改用 GitHub 搜索页或仓库页兜底抓取；仍拿不到就标注「未获取到」、不终止任务也不编造 star 数、评分或描述；不确定的数值标 ≈ 并注明依据；不把无法验证的项目伪装成榜单结果。"
+  }
+]
