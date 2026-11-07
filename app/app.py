@@ -69,7 +69,7 @@ def api_analyze_get():
     p = {
         "period": request.args.get("period", "daily"),
         "language": request.args.get("language", ""),
-        "limit": request.args.get("limit", 20),
+        "limit": request.args.get("limit", 10),
         "min_stars": request.args.get("min_stars", 100),
         "source": request.args.get("source", "auto"),
         "translate": request.args.get("translate", "1") != "0",
@@ -84,7 +84,7 @@ def _do_analyze(p: dict):
     if period not in core.PERIOD_DAYS:
         period = "daily"
     try:
-        limit = max(3, min(50, int(p.get("limit", 20))))
+        limit = max(3, min(50, int(p.get("limit", 10))))
         min_stars = max(0, min(100000, int(p.get("min_stars", 100))))
     except (TypeError, ValueError):
         return jsonify({"error": "数量或最低 Star 参数不是有效数字"}), 400
@@ -154,7 +154,7 @@ def official_refresh():
         res = core.refresh_official(
             period=period,
             language=request.args.get("language", "").strip(),
-            limit=max(3, min(50, int(request.args.get("limit", 25)))),
+            limit=max(3, min(50, int(request.args.get("limit", 10)))),
             token=request.headers.get("X-GitHub-Token", ""),
         )
     except Exception as e:
